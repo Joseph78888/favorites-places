@@ -1,9 +1,9 @@
-import 'dart:math';
+import 'package:uuid/uuid.dart';
 
-var random = Random();
+const uuid = Uuid();
 
 class Place {
-  Place({required this.title}) : id = random.nextInt(100);
-  final int id;
+  Place({required this.title}) : id = uuid.v4();
+  final String id;
   final String title;
 }
