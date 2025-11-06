@@ -1,18 +1,45 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:native_app/providers/user_places.dart';
 
 import 'package:native_app/widgets/pick_image.dart';
 
-class AddPlaceScreen extends StatefulWidget {
+class AddPlaceScreen extends ConsumerStatefulWidget {
   const AddPlaceScreen({super.key});
 
   @override
-  State<AddPlaceScreen> createState() => _AddPlaceScreenState();
+  ConsumerState<AddPlaceScreen> createState() => _AddPlaceScreenState();
 }
 
-class _AddPlaceScreenState extends State<AddPlaceScreen> {
+class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _titleController = TextEditingController();
+  File? _selectedImage;
 
-  void _savePlace() {}
+  void _savePlace() {
+    final enterdTitle = _titleController.text;
+    if (enterdTitle.isEmpty || _selectedImage == null) {
+      // showAboutDialog(
+      //   context: context,
+
+      //   // builder: (BuildContext context) {
+      //   //   return Center(
+      //   //     child: Container(
+      //   //       color: Theme.of(context).colorScheme.primary,
+      //   //       child: Text('Something went Wrong!'),
+      //   //     ),
+      //   //   );
+      //   // },
+      // );
+      return;
+    }
+    ref
+        .read(userPlacesProvider.notifier)
+        .addPlace(enterdTitle, _selectedImage!);
+
+    Navigator.of(context).pop();
+  }
 
   @override
   void dispose() {
@@ -49,9 +76,13 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
               ),
               controller: _titleController,
             ),
-            
+
             const SizedBox(height: 16),
-            const PickImage(),
+            PickImage(
+              onPickImage: (image) {
+                _selectedImage = image;
+              },
+            ),
             const SizedBox(height: 16),
 
             SizedBox(
