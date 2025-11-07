@@ -62,7 +62,7 @@ class _PickImageState extends State<PickImage> {
         ),
         borderRadius: BorderRadius.circular(30),
       ),
-      clipBehavior: Clip.hardEdge,
+      clipBehavior: Clip.antiAlias,
       child: content,
     );
   }

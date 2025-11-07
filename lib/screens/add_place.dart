@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:native_app/providers/user_places.dart';
+import 'package:native_app/widgets/location_input.dart';
 
 import 'package:native_app/widgets/pick_image.dart';
 
@@ -84,7 +85,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               },
             ),
             const SizedBox(height: 16),
-
+            LocationInput(),
+            
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 60,
