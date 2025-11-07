@@ -18,7 +18,7 @@ class _LocationInputState extends State<LocationInput> {
   PlaceLocation? _pickedLocation;
   var _isGettingLocation = false;
 
-  String get licationImage {
+  String get locationImage {
     if (_pickedLocation == null) {
       return 'not-found';
     }
@@ -56,29 +56,60 @@ class _LocationInputState extends State<LocationInput> {
       _isGettingLocation = true;
     });
 
-    locationData = await location.getLocation();
-    final lat = locationData.latitude;
-    final lon = locationData.longitude;
-    if (lat == null || lon == null) {
-      return;
-    }
+    try {
+      locationData = await location.getLocation();
+      final lat = locationData.latitude;
+      final lon = locationData.longitude;
 
-    final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lon&key=$apiKye',
-    );
-    final response = await http.get(url);
-    final responseData = json.decode(response.body);
-    final address = responseData['results'][0]['formatted_address'];
+      if (lat == null || lon == null) {
+        // No valid coordinates, nothing to do.
+        return;
+      }
 
-    setState(() {
-      _pickedLocation = PlaceLocation(
-        latitude: lat,
-        longitude: lon,
-        address: address,
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lon&key=$apiKye',
       );
 
-      _isGettingLocation = false;
-    });
+      final response = await http.get(url);
+
+      String address = 'Unknown location';
+      if (response.statusCode == 200) {
+        final responseData =
+            json.decode(response.body) as Map<String, dynamic>?;
+        final results = responseData?['results'] as List<dynamic>?;
+        if (results != null && results.isNotEmpty) {
+          final first = results[0] as Map<String, dynamic>?;
+          address = (first != null && first['formatted_address'] != null)
+              ? first['formatted_address'] as String
+              : address;
+        }
+      }
+
+      // Update picked location with a safe address value
+      setState(() {
+        _pickedLocation = PlaceLocation(
+          latitude: lat,
+          longitude: lon,
+          address: address,
+        );
+      });
+    } catch (error) {
+      // Optionally inform the user; for now show a small message.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not fetch location/address.')),
+        );
+      }
+    } finally {
+      // Ensure we always clear the loading indicator.
+      if (mounted) {
+        setState(() {
+          _isGettingLocation = false;
+        });
+      } else {
+        _isGettingLocation = false;
+      }
+    }
   }
 
   @override
@@ -88,12 +119,44 @@ class _LocationInputState extends State<LocationInput> {
       style: TextStyle(color: Theme.of(context).colorScheme.primary),
     );
 
-    if(_pickedLocation != null) {
+    if (_pickedLocation != null) {
       previewContent = Image.network(
-        licationImage,
+        locationImage,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        // Show progress while the image is loading
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(child: CircularProgressIndicator());
+        },
+        // Handle HTTP errors (403, 404, etc.) gracefully
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assest/images/map.png',
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          );
+
+          // return Center(
+          //   child: Column(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: [
+          //       Icon(
+          //         Icons.map_outlined,
+          //         size: 48,
+          //         color: Theme.of(context).colorScheme.primary,
+          //       ),
+          //       SizedBox(height: 8),
+          //       Text(
+          //         'Could not load map',
+          //         style: TextStyle(color: Theme.of(context).colorScheme.primary),
+          //       ),
+          //     ],
+          //   ),
+          // );
+        },
       );
     }
 
@@ -115,7 +178,7 @@ class _LocationInputState extends State<LocationInput> {
             ),
             borderRadius: BorderRadius.circular(30),
           ),
-          clipBehavior: Clip.antiAlias,
+          clipBehavior: Clip.hardEdge,
           child: previewContent,
         ),
         SizedBox(height: 12),
@@ -127,7 +190,7 @@ class _LocationInputState extends State<LocationInput> {
             // first button
             OutlinedButton.icon(
               onPressed: _getCurrentUserLocation,
-              icon: Icon(Icons.location_on),
+              icon: Icon(Icons.location_on_rounded),
               label: Text('Get Current Location'),
             ),
             SizedBox(width: 20),

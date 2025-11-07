@@ -36,7 +36,7 @@ class _PickImageState extends State<PickImage> {
     Widget content = TextButton.icon(
       onPressed: _takePicture,
       icon: Icon(Icons.camera_alt_rounded),
-      label: Text('Tack Picture'),
+      label: Text('Take Picture'),
     );
 
     if (_selectedImage != null) {
