@@ -1,3 +1,70 @@
+/// A Flutter widget that allows the user to obtain and preview a geographic
+/// location using the device's location services and the Google Maps/Geocoding
+/// APIs.
+///
+/// This file provides a stateful widget, `LocationInput`, which:
+/// - Requests and validates device location services and permissions using the
+///   `location` package.
+/// - Fetches the device's current geographic coordinates (latitude/longitude).
+/// - Calls the Google Geocoding API to resolve a human-readable address for
+///   the coordinates.
+/// - Builds a URL for the Google Static Maps API to display a map image with a
+///   marker at the chosen coordinates.
+/// - Shows a preview area that displays:
+///   - A placeholder message when no location is chosen.
+///   - A static map image when a location is available (with a loading
+///     indicator while the image loads).
+///   - A bundled asset fallback image if the network map cannot be loaded.
+/// - Provides two action buttons:
+///   - "Get Current Location": attempts to detect the user's current location
+///     and resolve an address (wired to an async handler).
+///   - "Select on Map": placeholder for future map-selection functionality.
+///
+/// Notes on behavior and error handling:
+/// - The widget uses a boolean `_isGettingLocation` to show a loading state
+///   while the current location is being retrieved.
+/// - Location service availability and permissions are checked and, if
+///   necessary, requested interactively. If the service is disabled or the
+///   permission is denied by the user, the location fetch is aborted.
+/// - If coordinate retrieval fails or returns null coordinates, the method
+///   aborts without updating state.
+/// - When coordinates are available, the widget makes an HTTP GET request to
+///   the Google Geocoding API to obtain a formatted address. If the request
+///   fails or responses do not contain a usable address, an "Unknown location"
+///   fallback address is used.
+/// - Network and parsing errors are caught and handled: a SnackBar is shown
+///   to inform the user that the location/address could not be fetched.
+/// - The code ensures the loading indicator state (`_isGettingLocation`) is
+///   cleared in a finally block, and only calls `setState` when the widget is
+///   still mounted to avoid state-management errors.
+///
+/// Integration notes:
+/// - This widget depends on:
+///   - package:location for service/permission management and coordinate access.
+///   - package:http for the Geocoding API call.
+///   - a string `apiKye` (imported from a constants file) to build Google API
+///     request URLs — ensure a valid API key is provided and the key name in
+///     the constants matches this usage.
+///   - a `PlaceLocation` model type used to hold latitude, longitude and
+///     resolved address information.
+/// - The Static Map URL generation and Geocoding request rely on Google web
+///   APIs; ensure billing and API access are configured for the provided key.
+/// - The widget references a local asset image path for fallback display; make
+///   sure the asset exists and is declared in pubspec.yaml.
+///
+/// UI details:
+/// - The preview area is a rounded container with a visible border and fixed
+///   height. It displays either the map image, a progress indicator while the
+///   image loads, a fallback asset on error, or a textual placeholder when no
+///   location is selected.
+/// - Buttons are rendered in a row below the preview with evenly distributed
+///   spacing. The second "Select on Map" button is left intentionally unimplemented
+///   for future extension (e.g. opening an interactive map screen).
+///
+/// Threading / async:
+/// - All network and location operations are performed asynchronously and
+///   awaited. UI state updates are performed via `setState` and guarded by the
+///   widget's `mounted` flag where necessary to avoid updating unmounted widgets.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -18,6 +85,25 @@ class _LocationInputState extends State<LocationInput> {
   PlaceLocation? _pickedLocation;
   var _isGettingLocation = false;
 
+  /// Returns a URL string for a Google Static Maps image representing the
+  /// currently picked location.
+  ///
+  /// If `_pickedLocation` is null this getter returns the literal string
+  /// `'not-found'`. Otherwise it constructs an HTTP URL that:
+  ///  - centers the map on the picked latitude and longitude,
+  ///  - uses zoom level 16,
+  ///  - requests an image sized 600x300 pixels,
+  ///  - uses the `roadmap` map type, and
+  ///  - places a red marker labeled "A" at the location.
+  ///
+  /// The API key value referenced by `apiKye` must be set and valid for the
+  /// returned URL to produce an actual map image. No network request is made
+  /// by this getter — it only returns the encoded URL string suitable for use
+  /// as an image source (for example in an Image.network call).
+  ///
+  /// Note: latitude and longitude are taken from `_pickedLocation.latitude`
+  /// and `_pickedLocation.longitude` and are interpolated directly into the
+  /// query parameters.
   String get locationImage {
     if (_pickedLocation == null) {
       return 'not-found';
@@ -29,6 +115,39 @@ class _LocationInputState extends State<LocationInput> {
     ).toString();
   }
 
+  /// Asynchronously obtains the device's current geographic location, performs
+  /// reverse-geocoding via the Google Maps Geocoding API, and extracts a
+  /// human-readable address.
+  ///
+  /// Workflow:
+  /// - Ensures the device location service is enabled. If not enabled, requests
+  ///   the user to enable it; returns early if the service remains disabled.
+  /// - Ensures location permission is granted. If permission is denied, requests
+  ///   permission and returns early if permission is not granted.
+  /// - Sets the widget state flag `_isGettingLocation` to true (via setState)
+  ///   to indicate a location fetch is in progress.
+  /// - Attempts to read the current location (latitude/longitude) using the
+  ///   Location package. Returns early if either coordinate is null.
+  /// - Constructs a Google Geocoding API request URL (using the `apiKye` value),
+  ///   issues an HTTP GET request, and parses the JSON response.
+  /// - Extracts the first result's `formatted_address` when available; otherwise
+  ///   falls back to a default string ("Unknown location").
+  ///
+  /// Side effects:
+  /// - Mutates widget state (`_isGettingLocation`).
+  /// - Performs network I/O and JSON decoding.
+  /// - Prints/logs the generated URL and HTTP response (present in the snippet).
+  ///
+  /// Notes and considerations:
+  /// - Ensure `apiKye` contains a valid Google API key and is stored securely.
+  /// - Exceptions from location retrieval or network requests are executed
+  ///   inside a try block in the snippet; verify that appropriate catch/finally
+  ///   handling exists to reset state and surface errors to the user.
+  /// - The snippet shown does not demonstrate resetting `_isGettingLocation`
+  ///   after completion or error—add cleanup to avoid stale UI state.
+  /// - Be mindful of runtime permission flows and long-running operations on
+  ///   the UI thread; consider additional user feedback (e.g., error messages,
+  ///   spinners) and cancellation handling as needed.
   void _getCurrentUserLocation() async {
     Location location = Location();
 
@@ -69,8 +188,10 @@ class _LocationInputState extends State<LocationInput> {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lon&key=$apiKye',
       );
+      print('====================$url===================================================');
 
       final response = await http.get(url);
+      print(response);
 
       String address = 'Unknown location';
       if (response.statusCode == 200) {
@@ -113,7 +234,7 @@ class _LocationInputState extends State<LocationInput> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     Widget previewContent = Text(
       'No location chosen!',
       style: TextStyle(color: Theme.of(context).colorScheme.primary),
