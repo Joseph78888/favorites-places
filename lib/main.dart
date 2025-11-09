@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:native_app/screens/places.dart';
 
@@ -17,8 +18,17 @@ class MyApp extends StatelessWidget {
       title: 'Favourite Places',
       darkTheme: ThemeData.dark(),
       theme: ThemeData(
+        textTheme: GoogleFonts.montserratTextTheme(
+          Theme.of(context).textTheme,
+        ).copyWith(
+          titleLarge: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      
       themeMode: ThemeMode.light,
       home: const PlacesScreen(),
     );

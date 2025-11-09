@@ -188,7 +188,9 @@ class _LocationInputState extends State<LocationInput> {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lon&key=$apiKye',
       );
-      print('====================$url===================================================');
+      print(
+        '====================$url===================================================',
+      );
 
       final response = await http.get(url);
       print(response);
@@ -234,10 +236,12 @@ class _LocationInputState extends State<LocationInput> {
   }
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     Widget previewContent = Text(
       'No location chosen!',
-      style: TextStyle(color: Theme.of(context).colorScheme.primary),
+      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        color: Theme.of(context).colorScheme.primary,
+      ),
     );
 
     if (_pickedLocation != null) {
@@ -312,15 +316,25 @@ class _LocationInputState extends State<LocationInput> {
             OutlinedButton.icon(
               onPressed: _getCurrentUserLocation,
               icon: Icon(Icons.location_on_rounded),
-              label: Text('Get Current Location'),
+              label: Text(
+                'Get Current Location',
+                style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                ),
+              ),
             ),
-            SizedBox(width: 20),
+            SizedBox(width: 8),
 
             // second button
             OutlinedButton.icon(
               onPressed: () {},
               icon: Icon(Icons.map),
-              label: Text('Select on Map'),
+              label: Text(
+                'Select on Map',
+                style: TextStyle(
+                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                ),
+              ),
             ),
           ],
         ),
