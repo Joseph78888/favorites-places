@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:native_app/models/place.dart';
+import 'package:native_app/providers/user_places.dart';
 import 'package:native_app/screens/place_detail.dart';
 
 /// A stateless widget that renders a scrollable list of places.
@@ -34,12 +37,51 @@ import 'package:native_app/screens/place_detail.dart';
 /// - [ListView.builder] is used for efficient, lazily-built list items for
 ///   better performance with long lists.
 
-class PlacesList extends StatelessWidget {
+class PlacesList extends ConsumerWidget {
   const PlacesList({super.key, required this.places});
   final List<Place> places;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.read(userPlacesProvider.notifier).isLoading;
+
+    if (places.isEmpty && isLoading) {
+      // Show shimmer placeholders while loading persisted places
+      return ListView.builder(
+        itemCount: 3,
+        itemBuilder: (ctx, index) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(height: 14, color: Colors.white),
+                      const SizedBox(height: 8),
+                      Container(height: 10, width: 150, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (places.isEmpty) {
       return Center(
         child: Text(
@@ -51,44 +93,59 @@ class PlacesList extends StatelessWidget {
         ),
       );
     }
+
     return ListView.builder(
       itemCount: places.length,
-      itemBuilder: (ctx, index) => ListTile(
-        leading: Hero(
-          // transitionOnUserGestures: true,
-          tag: places[index].id,
-          child: CircleAvatar(
-            radius: 22,
-            backgroundImage: FileImage(places[index].image),
+      itemBuilder: (ctx, index) {
+        final place = places[index];
+        return Dismissible(
+          key: ValueKey(place.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            color: Theme.of(context).colorScheme.error,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Icon(Icons.delete, color: Theme.of(context).colorScheme.onError),
           ),
-        ),
-
-        title: Text(
-          places[index].title,
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-
-        subtitle: Text(
-          'you added "${places[index].title}" as fav place',
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
-            color: Theme.of(context).colorScheme.onSecondaryContainer,
-          ),
-        ),
-
-        trailing: Icon(Icons.arrow_forward_ios),
-
-        style: ListTileStyle.drawer,
-
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => PlaceDetailScreen(place: places[index]),
+          onDismissed: (direction) async {
+            final messenger = ScaffoldMessenger.of(context);
+            await ref.read(userPlacesProvider.notifier).removePlace(place.id);
+            messenger.showSnackBar(
+              SnackBar(content: Text('Deleted "${place.title}"')),
+            );
+          },
+          child: ListTile(
+            leading: Hero(
+              tag: place.id,
+              child: CircleAvatar(
+                radius: 22,
+                backgroundImage: FileImage(place.image),
+              ),
             ),
-          );
-        },
-      ),
+            title: Text(
+              place.title,
+              style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            subtitle: Text(
+              'you added "${place.title}" as fav place',
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: Theme.of(context).colorScheme.onSecondaryContainer,
+              ),
+            ),
+            trailing: Icon(Icons.arrow_forward_ios),
+            style: ListTileStyle.drawer,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => PlaceDetailScreen(place: place),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
