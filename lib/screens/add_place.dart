@@ -2,10 +2,40 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:native_app/providers/user_places.dart';
 import 'package:native_app/widgets/location_input.dart';
-
 import 'package:native_app/widgets/pick_image.dart';
+/// A screen widget that lets the user enter and save a new "place".
+///
+/// This is a ConsumerStatefulWidget that composes a title input, an image
+/// picker, and a location input. The collected data is validated and then
+/// forwarded to the application state via the `userPlacesProvider`
+/// notifier. On successful save the screen is dismissed.
+///
+/// UI overview:
+///  - A TextField for the place title, managed by `_titleController`.
+///  - A `PickImage` widget that returns a selected `File` stored in
+///    `_selectedImage`.
+///  - A `LocationInput` widget for selecting a place location (kept
+///    separate from the state shown here).
+///  - A full-width elevated button that triggers saving the place.
+///
+/// Behavior and validation:
+///  - When the save action is triggered, the title must be non-empty and
+///    an image must be selected. If either validation fails, the save is
+///    aborted (a UI feedback hook is left commented in the code).
+///  - On valid input, the screen calls:
+///      ref.read(userPlacesProvider.notifier).addPlace(title, image)
+///    then pops the current route to return to the previous screen.
+///
+/// Notes:
+///  - The screen uses Riverpod's `ref` (via ConsumerState) to interact with
+///    the provider layer.
+///  - `_titleController` is cleaned up in `dispose` to avoid resource leaks.
+///  - Error / empty-field feedback is currently implied but not shown; you
+///    may want to replace the commented dialog with a proper user-facing
+///    alert or inline validation message.
 
 class AddPlaceScreen extends ConsumerStatefulWidget {
   const AddPlaceScreen({super.key});

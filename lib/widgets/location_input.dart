@@ -1,3 +1,12 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:location/location.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:native_app/constant/api_key.dart';
+import 'package:native_app/models/place.dart';
+
 /// A Flutter widget that allows the user to obtain and preview a geographic
 /// location using the device's location services and the Google Maps/Geocoding
 /// APIs.
@@ -65,14 +74,6 @@
 /// - All network and location operations are performed asynchronously and
 ///   awaited. UI state updates are performed via `setState` and guarded by the
 ///   widget's `mounted` flag where necessary to avoid updating unmounted widgets.
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
-import 'package:location/location.dart';
-import 'package:http/http.dart' as http;
-
-import 'package:native_app/constant/api_key.dart';
-import 'package:native_app/models/place.dart';
 
 class LocationInput extends StatefulWidget {
   const LocationInput({super.key});

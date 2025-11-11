@@ -3,6 +3,24 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// A stateful widget that provides a simple image-capture UI using the device camera.
+///
+/// The widget shows a prominent rounded container. When no image is selected it displays
+/// a "Take Picture" button; after the user takes a picture it shows a full-coverage preview
+/// of the captured image and allows the user to tap the preview to retake the photo.
+///
+/// The widget uses the image_picker package to open the camera and returns the selected
+/// image as a `dart:io` `File` to the caller via the [onPickImage] callback.
+///
+/// Typical usage:
+/// ```dart
+/// PickImage(
+///   onPickImage: (file) {
+///     // handle the selected image file
+///   },
+/// )
+/// ```
+
 class PickImage extends StatefulWidget {
   const PickImage({super.key, required this.onPickImage});
 
