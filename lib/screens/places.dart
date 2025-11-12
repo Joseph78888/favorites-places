@@ -43,13 +43,13 @@ class PlacesScreen extends ConsumerStatefulWidget {
 
 class _PlacesScreenState extends ConsumerState<PlacesScreen> {
   @override
-  void initState() {
-    super.initState();
-    // Populate dummy places once after first frame if none exist.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(userPlacesProvider.notifier).loadDummyPlaces();
-    });
-  }
+  // void initState() {
+  //   super.initState();
+  //   // Populate dummy places once after first frame if none exist.
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     ref.read(userPlacesProvider.notifier).loadDummyPlaces();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

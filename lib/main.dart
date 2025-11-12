@@ -21,7 +21,7 @@ class MyApp extends ConsumerWidget {
       darkTheme: ThemeData.dark().copyWith(
         textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 19, 0, 53),
+          seedColor:  Colors.deepPurple,
           brightness: Brightness.dark,
         ),
       ),

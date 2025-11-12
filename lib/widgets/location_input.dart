@@ -189,12 +189,10 @@ class _LocationInputState extends State<LocationInput> {
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lon&key=$apiKye',
       );
-      print(
-        '====================$url===================================================',
-      );
+     
 
       final response = await http.get(url);
-      print(response);
+    
 
       String address = 'Unknown location';
       if (response.statusCode == 200) {

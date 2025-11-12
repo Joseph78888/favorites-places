@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/legacy.dart';
 class ThemeProvider extends ChangeNotifier {
   static const _prefKey = 'theme_mode'; // values: 'system', 'light', 'dark'
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   ThemeProvider() {
     _loadFromPrefs();
   }

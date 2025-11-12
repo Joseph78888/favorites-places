@@ -32,10 +32,16 @@ import 'package:native_app/screens/add_place.dart';
 /// PlaceDetailScreen(place: myPlace);
 /// ```
 
-
 class PlaceDetailScreen extends StatelessWidget {
-  const PlaceDetailScreen({super.key, required this.place});
+  PlaceDetailScreen({super.key, required this.place});
   final Place place;
+  final List<Place> favoritePlaces = [];
+
+  void _addToFavorites(Place place) {
+    favoritePlaces.add(place);
+    print('=======================');
+    // You might want to show a confirmation message or update the UI accordingly.
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,25 +69,103 @@ class PlaceDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  // top: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        bottom: Radius.circular(16),
+                      ),
+                      gradient: LinearGradient(
+                        colors: [Colors.transparent, Colors.black],
+                        begin: AlignmentGeometry.topCenter,
+                        end: AlignmentGeometry.bottomCenter,
+                      ),
+                    ),
+                    width: double.infinity,
+                    height: 220,
+
+                    // clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: AssetImage('assest/images/map.png'),
+                          maxRadius: 70,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          ' Your image addres will appear here',
+                          style: Theme.of(context).textTheme.titleMedium!
+                              .copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                        ),
+                        Text(
+                          'make sure you picked the correct location',
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
-            
+
             SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(
-                    context,
-                  ).pushReplacement(MaterialPageRoute(builder: (ctx) => AddPlaceScreen()));
-                },
-                label: Text('Add new fav place'),
-                icon: Icon(Icons.place_outlined),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
+            Padding(
+              padding: const EdgeInsets.all(.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    width: 350,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (ctx) => AddPlaceScreen()),
+                        );
+                      },
+                      label: Text('Add new fav place'),
+                      icon: Icon(Icons.place_outlined),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 5),
+
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(200),
+                    ),
+                    alignment: Alignment.center,
+                    child: IconButton(
+                      onPressed: () {
+                        _addToFavorites(place);
+
+                      },
+                      icon: Icon(
+                        Icons.favorite_border_rounded,
+                        color: Colors.white,
+                      ),
+                      color: Theme.of(context).colorScheme.primary,
+                      iconSize: 30,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
