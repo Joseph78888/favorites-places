@@ -55,7 +55,7 @@ class _PlacesListState extends ConsumerState<PlacesList> {
       return Center(
         child: Text(
           '        No Places Added Yet!\n'
-          'try press + putton and add one',
+          'try press + button and add one',
           style: Theme.of(context).textTheme.titleMedium!.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
           ),

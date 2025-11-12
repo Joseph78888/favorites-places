@@ -80,7 +80,7 @@ class PlaceDetailScreen extends StatelessWidget {
                         bottom: Radius.circular(16),
                       ),
                       gradient: LinearGradient(
-                        colors: [Colors.transparent, Colors.black],
+                        colors: [Colors.transparent, Colors.black87],
                         begin: AlignmentGeometry.topCenter,
                         end: AlignmentGeometry.bottomCenter,
                       ),
@@ -155,7 +155,6 @@ class PlaceDetailScreen extends StatelessWidget {
                     child: IconButton(
                       onPressed: () {
                         _addToFavorites(place);
-
                       },
                       icon: Icon(
                         Icons.favorite_border_rounded,

@@ -1,18 +1,18 @@
-import 'dart:convert';
 import 'dart:io';
 
 // import 'package:flutter/services.dart' show rootBundle;
 // import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
+// persistence to device disabled by request: commenting out related imports
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:path_provider/path_provider.dart';
 
 import 'package:native_app/models/place.dart';
 
 class UserPlacesNotifier extends StateNotifier<List<Place>> {
   UserPlacesNotifier() : super(const []) {
-    _isLoading = true;
-    _loadFromPrefs();
+    // Persistence disabled: do not load from device. Keep in-memory state only.
+    _isLoading = false;
   }
 
   bool _isLoading = false;
@@ -25,21 +25,10 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
     String title,
     File image /* PlaceLocation location */,
   ) async {
-    try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = 'place_${DateTime.now().millisecondsSinceEpoch}.png';
-      final savedImage = await image.copy('${appDir.path}/$fileName');
-
-      final newPlace = Place(title: title, image: savedImage);
-      state = [newPlace, ...state];
-      _isLoading = false;
-      await _saveToPrefs();
-    } catch (e) {
-      // Fallback: use original image if copy fails
-      final newPlace = Place(title: title, image: image);
-      state = [newPlace, ...state];
-      await _saveToPrefs();
-    }
+    // Device persistence disabled: keep the provided File reference in-memory
+    final newPlace = Place(title: title, image: image);
+    state = [newPlace, ...state];
+    _isLoading = false;
   }
 
   /// Load three dummy places by copying an example asset into temporary files.
@@ -82,52 +71,7 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
   //   }
   // }
 
-  // --- persistence helpers ---
-  static const _kPlacesPrefsKey = 'user_places';
-
-  Future<void> _saveToPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final encoded = state
-          .map(
-            (p) => json.encode({
-              'id': p.id,
-              'title': p.title,
-              'image': p.image.path,
-            }),
-          )
-          .toList();
-      await prefs.setStringList(_kPlacesPrefsKey, encoded);
-    } catch (_) {}
-  }
-
-  Future<void> _loadFromPrefs() async {
-    try {
-      _isLoading = true;
-      final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList(_kPlacesPrefsKey);
-      if (list == null || list.isEmpty) return;
-      final loaded = <Place>[];
-      for (final s in list) {
-        try {
-          final map = json.decode(s) as Map<String, dynamic>;
-          final imagePath = map['image'] as String?;
-          final title = map['title'] as String?;
-          final id = map['id'] as String?;
-          if (imagePath == null || title == null) continue;
-          final imgFile = File(imagePath);
-          if (!imgFile.existsSync()) continue;
-          loaded.add(Place(id: id, title: title, image: imgFile));
-        } catch (_) {}
-      }
-      if (loaded.isNotEmpty) {
-        state = loaded;
-      }
-      _isLoading = false;
-      // notify listeners by forcing a state update (same list) so UI depending on notifier.isLoading rebuilds
-      state = [...state];
-    } catch (_) {}
-  }
+  // Persistence helpers are disabled. The app will not save places to device.
 
   /// Remove a place by id. Returns the removed Place if found.
   Future<Place?> removePlace(String id) async {
@@ -141,14 +85,12 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
         await removed.image.delete();
       }
     } catch (_) {}
-    await _saveToPrefs();
     return removed;
   }
 
   /// Restore a previously removed place (inserts at front) without copying image.
   Future<void> restorePlace(Place place) async {
     state = [place, ...state];
-    await _saveToPrefs();
   }
 }
 
