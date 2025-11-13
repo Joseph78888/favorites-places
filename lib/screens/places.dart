@@ -5,6 +5,7 @@ import 'package:native_app/providers/user_places.dart';
 import 'package:native_app/providers/theme.dart';
 import 'package:native_app/screens/add_place.dart';
 import 'package:native_app/widgets/places_list.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// A screen that displays the user's saved places and provides basic settings.
 ///
@@ -42,14 +43,13 @@ class PlacesScreen extends ConsumerStatefulWidget {
 }
 
 class _PlacesScreenState extends ConsumerState<PlacesScreen> {
+  late Future<void> _placesFuture;
+
   @override
-  // void initState() {
-  //   super.initState();
-  //   // Populate dummy places once after first frame if none exist.
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     ref.read(userPlacesProvider.notifier).loadDummyPlaces();
-  //   });
-  // }
+  void initState() {
+    super.initState();
+    _placesFuture = ref.read(userPlacesProvider.notifier).loadPlaces();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,53 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: PlacesList(places: userPlaces),
+        child: FutureBuilder(
+          future: _placesFuture,
+          builder: (context, snapshot) =>
+              snapshot.connectionState == ConnectionState.waiting
+              ? // Show shimmer placeholders while loading persisted places
+                ListView.builder(
+                  itemCount: 3,
+                  itemBuilder: (ctx, index) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 12.0,
+                    ),
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(height: 14, color: Colors.white),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 10,
+                                  width: 150,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : PlacesList(places: userPlaces),
+        ),
       ),
     );
   }

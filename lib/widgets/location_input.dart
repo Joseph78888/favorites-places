@@ -284,10 +284,6 @@ class _LocationInputState extends State<LocationInput> {
       );
     }
 
-    if (_isGettingLocation) {
-      previewContent = CircularProgressIndicator();
-    }
-
     return Column(
       children: [
         // placeholder for map image

@@ -1,23 +1,50 @@
 import 'dart:io';
 
-// import 'package:flutter/services.dart' show rootBundle;
-// import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/legacy.dart';
-// persistence to device disabled by request: commenting out related imports
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart' as syspaths;
+import 'package:path/path.dart' as path;
+import 'package:sqflite/sqflite.dart' as sql;
+import 'package:sqflite/sqlite_api.dart';
 
 import 'package:native_app/models/place.dart';
 
+Future<Database> _getDataBase() async {
+  final dbPath = await sql.getDatabasesPath();
+  final db = await sql.openDatabase(
+    // Open the database at a given path
+    path.join(
+      dbPath,
+      'places.db',
+    ), //Joins the given path parts into a single path using the current platform's [separator]
+    onCreate: (db, version) {
+      return db.execute(
+        // Execute an SQL query with no return value.
+        'CREATE TABLE user_places(id TEXT PRIMARY KEY, title TEXT, image TEXT)',
+      );
+    },
+    version:
+        1, //[version] (optional) specifies the schema version of the database being opened. This is used to decide whether to call [onCreate], [onUpgrade], and [onDowngrade]
+  );
+  return db;
+}
+
 class UserPlacesNotifier extends StateNotifier<List<Place>> {
-  UserPlacesNotifier() : super(const []) {
-    // Persistence disabled: do not load from device. Keep in-memory state only.
-    _isLoading = false;
+  UserPlacesNotifier() : super(const []);
+
+  Future<void> loadPlaces() async {
+    final db = await _getDataBase();
+    final data = await db.query('user_places');
+    final places = data
+        .map(
+          (row) => Place(
+            id: row['id'] as String,
+            image: File(row['image'] as String),
+            title: row['title'] as String,
+          ),
+        )
+        .toList();
+    state = places;
   }
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
 
   /// Add a place: copy the provided image into the app documents directory
   /// so it persists, update state and save to SharedPreferences.
@@ -26,72 +53,31 @@ class UserPlacesNotifier extends StateNotifier<List<Place>> {
     File image /* PlaceLocation location */,
   ) async {
     // Device persistence disabled: keep the provided File reference in-memory
-    final newPlace = Place(title: title, image: image);
+    final appDir = await syspaths
+        .getApplicationDocumentsDirectory(); //Path to a directory where the application may place data that is user-generated
+
+    final fileName = path.basename(
+      image.path,
+    ); // Gets the part of [path] after the last separator.
+
+    final copiedImage = await image.copy(
+      '${appDir.path}/$fileName',
+    ); // Copies this file.
+
+    final newPlace = Place(title: title, image: copiedImage);
+
+    final db = await _getDataBase();
+    db.insert('user_places', {
+      'id': newPlace.id,
+      'title': newPlace.title,
+      'image': newPlace.image.path,
+    });
+
     state = [newPlace, ...state];
-    _isLoading = false;
   }
 
-  /// Load three dummy places by copying an example asset into temporary files.
-  /// This is safe to call multiple times; it only populates when state is empty.
-  // Future<void> loadDummyPlaces() async {
-  //   if (state.isNotEmpty) return;
+ 
 
-  //   try {
-  //     final titles = ['Example', 'Home', 'Nice place'];
-
-  //     for (var i = 0; i < titles.length; i++) {
-  //       // Try to download a distinct placeholder image (picsum) for each entry.
-  //       File file;
-  //       try {
-  //         final uri = Uri.parse('https://picsum.photos/seed/place_$i/600/300');
-  //         final resp = await http.get(uri);
-  //         if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
-  //           file = File('${Directory.systemTemp.path}/native_app_dummy_place_$i.png');
-  //           await file.writeAsBytes(resp.bodyBytes);
-  //           await addPlace(titles[i], file);
-  //           continue;
-  //         }
-  //       } catch (_) {
-  //         // ignore and try asset fallback
-  //       }
-
-  //       // Fallback to bundled asset if download fails
-  //       try {
-  //         final data = await rootBundle.load('assest/images/map.png');
-  //         final bytes = data.buffer.asUint8List();
-  //         file = File('${Directory.systemTemp.path}/native_app_dummy_map_$i.png');
-  //         await file.writeAsBytes(bytes);
-  //         await addPlace(titles[i], file);
-  //       } catch (_) {
-  //         // If even fallback fails, skip adding this place.
-  //       }
-  //     }
-  //   } catch (e) {
-  //     // If asset copy fails, leave state empty — app will still work and user can add places.
-  //   }
-  // }
-
-  // Persistence helpers are disabled. The app will not save places to device.
-
-  /// Remove a place by id. Returns the removed Place if found.
-  Future<Place?> removePlace(String id) async {
-    final idx = state.indexWhere((p) => p.id == id);
-    if (idx < 0) return null;
-    final removed = state[idx];
-    state = [...state]..removeAt(idx);
-    // delete the image file if it exists
-    try {
-      if (removed.image.existsSync()) {
-        await removed.image.delete();
-      }
-    } catch (_) {}
-    return removed;
-  }
-
-  /// Restore a previously removed place (inserts at front) without copying image.
-  Future<void> restorePlace(Place place) async {
-    state = [place, ...state];
-  }
 }
 
 final userPlacesProvider =
