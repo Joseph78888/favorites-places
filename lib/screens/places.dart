@@ -61,6 +61,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
+              
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
               ),
@@ -81,6 +82,20 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                 );
               },
               secondary: Icon(Icons.dark_mode),
+            ),
+
+            ListTile(
+              title: Text('favorites'),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    dismissDirection: DismissDirection.horizontal,
+                    duration: Duration(seconds: 2),
+                    content: Text('comming soon ^_^'),
+                  ),
+                );
+              },
+              leading: Icon(Icons.favorite_rounded),
             ),
           ],
         ),

@@ -154,7 +154,13 @@ class PlaceDetailScreen extends StatelessWidget {
                     alignment: Alignment.center,
                     child: IconButton(
                       onPressed: () {
-                        _addToFavorites(place);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            dismissDirection: DismissDirection.horizontal,
+                            duration: Duration(seconds: 2),
+                            content: Text('comming soon ^_^'),
+                          ),
+                        );
                       },
                       icon: Icon(
                         Icons.favorite_border_rounded,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:native_app/models/place.dart';
-import 'package:native_app/providers/user_places.dart';
 import 'package:native_app/screens/place_detail.dart';
 
 /// A stateless widget that renders a scrollable list of places.
